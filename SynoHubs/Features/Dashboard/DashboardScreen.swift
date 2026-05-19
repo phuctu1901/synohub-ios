@@ -44,29 +44,8 @@ struct DashboardScreen: View {
         .background(Color(UIColor.systemGroupedBackground))
         .navigationTitle("SynoHub")
         .navigationBarTitleDisplayMode(.large)
-        .toolbar { appBarItems }
         .refreshable { await refresh() }
         .task { await refresh() }
-    }
-
-    // MARK: - Toolbar
-
-    @ToolbarContentBuilder
-    private var appBarItems: some ToolbarContent {
-        ToolbarItem(placement: .navigationBarTrailing) {
-            HStack(spacing: 12) {
-                Button(action: { onDisconnect?() }) {
-                    Image(systemName: "person.crop.circle")
-                        .font(.system(size: 22, weight: .regular))
-                        .foregroundColor(.blue)
-                }
-                NavigationLink(destination: SettingsScreen(onDisconnect: onDisconnect)) {
-                    Image(systemName: "gear")
-                        .font(.system(size: 22, weight: .regular))
-                        .foregroundColor(.blue)
-                }
-            }
-        }
     }
 
     // MARK: ① Hero Card — Apple Wallet Style
