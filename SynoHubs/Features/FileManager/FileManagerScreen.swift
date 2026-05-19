@@ -147,8 +147,7 @@ struct FileManagerScreen: View {
         }
         .animation(.spring(duration: 0.25), value: selectMode)
         .animation(.easeInOut(duration: 0.2), value: toastMsg == nil)
-        .navigationTitle(currentFolderName)
-        .navigationBarTitleDisplayMode(.large)
+        .toolbar(.hidden, for: .navigationBar)
         .onAppear { loadCurrent() }
         .sheet(isPresented: $showNewFolder) { newFolderSheet }
         .sheet(item: $renameEntry) { entry in renameSheet(entry) }

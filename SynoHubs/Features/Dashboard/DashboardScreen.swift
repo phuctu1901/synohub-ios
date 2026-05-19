@@ -42,8 +42,7 @@ struct DashboardScreen: View {
             }
         }
         .background(Color(UIColor.systemGroupedBackground))
-        .navigationTitle("SynoHub")
-        .navigationBarTitleDisplayMode(.large)
+        .toolbar(.hidden, for: .navigationBar)
         .refreshable { await refresh() }
         .task { await refresh() }
     }

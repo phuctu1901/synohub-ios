@@ -60,6 +60,7 @@ struct PhotosScreen: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(UIColor.systemGroupedBackground))
         .navigationTitle("Ảnh")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 HStack(spacing: 8) {

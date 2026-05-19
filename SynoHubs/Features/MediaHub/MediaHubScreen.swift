@@ -70,7 +70,7 @@ struct MediaHubScreen: View {
             }
         }
         .navigationTitle(currentPath == nil ? "Media" : folderName)
-        .navigationBarTitleDisplayMode(currentPath == nil ? .large : .inline)
+        .navigationBarTitleDisplayMode(.inline)
         .task { if movies.isEmpty && folders.isEmpty { await loadMedia() } }
         .fullScreenCover(item: $videoItem) { item in
             VideoPlayerView(url: item.url, title: item.title, subtitleOptions: item.subtitleOptions)
