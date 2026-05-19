@@ -839,9 +839,6 @@ struct VideoPlayerView: View {
     @State private var showSubtitlePicker = false
     @State private var showSettings       = false
 
-    // Safe area top (read from geometry before ignoresSafeArea)
-    @State private var safeAreaTop: CGFloat = 0
-
     // Skip flash
     @State private var showSkipLeft  = false
     @State private var showSkipRight = false
@@ -919,7 +916,7 @@ struct VideoPlayerView: View {
                     VideoControlsOverlay(
                         controller:    controller,
                         title:         title,
-                        safeAreaTop:   safeAreaTop,
+                        safeAreaTop:   max(geo.safeAreaInsets.top, 24),
                         hasSubtitles:  !subtitleOptions.isEmpty || subtitleManager.selectedID != nil,
                         onClose:       { dismiss() },
                         onSubtitleTap: { showSubtitlePicker = true },
@@ -940,7 +937,6 @@ struct VideoPlayerView: View {
             .animation(.easeInOut(duration: 0.15), value: showSkipRight)
             .animation(.easeInOut(duration: 0.15), value: showBrightness)
             .animation(.easeInOut(duration: 0.15), value: showVolume)
-            .onAppear { safeAreaTop = geo.safeAreaInsets.top }
         }
         .ignoresSafeArea()
         .statusBarHidden(true)
