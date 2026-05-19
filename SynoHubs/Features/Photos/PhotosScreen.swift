@@ -34,13 +34,42 @@ struct PhotosScreen: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // Custom Large Title & Actions Header
+            HStack {
+                Text("Ảnh")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                Spacer()
+                
+                // Toolbar Actions migrated from native NavigationBar
+                HStack(spacing: 16) {
+                    if tab == 0 {
+                        Button { withAnimation { isSelecting.toggle(); selectedIds.removeAll() } } label: {
+                            Image(systemName: isSelecting ? "xmark.circle.fill" : "checkmark.circle")
+                                .font(.system(size: 22))
+                                .foregroundColor(isSelecting ? .red : .blue)
+                        }
+                    }
+                    if tab == 1 {
+                        Button { showCreateAlbum = true } label: {
+                            Image(systemName: "plus.circle")
+                                .font(.system(size: 22))
+                                .foregroundColor(.blue)
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 4)
+            .padding(.bottom, 8)
+
             // Tab bar
             HStack(spacing: 6) {
                 tabBtn("Timeline", icon: "clock", idx: 0)
                 tabBtn("Albums", icon: "rectangle.stack", idx: 1)
                 tabBtn("Shared", icon: "person.2.circle", idx: 2)
             }
-            .padding(.horizontal, 16).padding(.top, 8)
+            .padding(.horizontal, 16)
 
             if search.isEmpty == false || tab == 0 || tab == 2 {
                 SynoSearchBar(text: $search, placeholder: "Search photos...")
@@ -59,25 +88,7 @@ struct PhotosScreen: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(UIColor.systemGroupedBackground))
-        .navigationTitle("Ảnh")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                HStack(spacing: 8) {
-                    if tab == 0 {
-                        Button { withAnimation { isSelecting.toggle(); selectedIds.removeAll() } } label: {
-                            Image(systemName: isSelecting ? "xmark.circle" : "checkmark.circle")
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    if tab == 1 {
-                        Button { showCreateAlbum = true } label: {
-                            Image(systemName: "plus.circle").foregroundColor(.blue)
-                        }
-                    }
-                }
-            }
-        }
+        .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $showCreateAlbum) { CreateAlbumSheet { await fetchAlbums() } }
         .fullScreenCover(isPresented: $showPhotoViewer) {
             PhotoViewerScreen(photos: photos, initialIndex: viewerIndex)

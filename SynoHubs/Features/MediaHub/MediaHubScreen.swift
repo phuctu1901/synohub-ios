@@ -36,8 +36,17 @@ struct MediaHubScreen: View {
             } else {
                 ScrollView {
                     VStack(spacing: 24) {
-                        // iOS Search Bar
                         if currentPath == nil {
+                            // Custom Large Title mimicking iOS native title
+                            Text("Đa phương tiện")
+                                .font(.largeTitle)
+                                .fontWeight(.bold)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 16)
+                                .padding(.top, 4)
+                                .padding(.bottom, -12) // Reduce gap to search bar
+                            
+                            // iOS Search Bar
                             HStack {
                                 Image(systemName: "magnifyingglass").foregroundColor(.secondary)
                                 TextField("Tìm kiếm phim, thư mục...", text: $search)
@@ -46,7 +55,6 @@ struct MediaHubScreen: View {
                             .padding(10)
                             .background(Color(UIColor.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 12))
                             .padding(.horizontal, 16)
-                            .padding(.top, 8)
                         }
 
                         if search.isEmpty {
@@ -69,8 +77,9 @@ struct MediaHubScreen: View {
                 }
             }
         }
-        .navigationTitle(currentPath == nil ? "Media" : folderName)
+        .navigationTitle(currentPath == nil ? "" : folderName)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(currentPath == nil ? .hidden : .visible, for: .navigationBar)
         .task { if movies.isEmpty && folders.isEmpty { await loadMedia() } }
         .fullScreenCover(item: $videoItem) { item in
             VideoPlayerView(url: item.url, title: item.title, subtitleOptions: item.subtitleOptions)

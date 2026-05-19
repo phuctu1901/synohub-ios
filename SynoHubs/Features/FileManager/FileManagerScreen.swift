@@ -126,6 +126,15 @@ struct FileManagerScreen: View {
             Color(UIColor.systemGroupedBackground).ignoresSafeArea()
 
             VStack(spacing: 0) {
+                // Custom Large Title mimicking iOS native title but with controlled padding
+                Text("Tệp")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 4)
+                    .padding(.bottom, 8)
+
                 if selectMode { selectHeader } else { headerBar }
                 if !pathStack.isEmpty || searchActive { breadcrumbsBar }
                 bodyContent
