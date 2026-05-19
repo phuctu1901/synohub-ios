@@ -123,30 +123,11 @@ struct FileManagerScreen: View {
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
-            Color(UIColor.systemGroupedBackground).ignoresSafeArea()
-
             VStack(spacing: 0) {
-                // Custom Large Title mimicking iOS native title but with controlled padding
-                Text("Tệp")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 4)
-                    .padding(.bottom, 8)
-
-                if selectMode { selectHeader } else { headerBar }
-                if !pathStack.isEmpty || searchActive { breadcrumbsBar }
+                if clipboardPaths != nil, currentPath != nil { pasteBanner }
                 bodyContent
             }
-
-            // FAB — only inside a folder, not in select mode
-            if currentPath != nil && !selectMode {
-                fabGroup
-                    .padding(.trailing, 16)
-                    .padding(.bottom, 20)
-            }
-
+            
             // Toast
             if let msg = toastMsg {
                 toastBubble(msg)
@@ -154,9 +135,70 @@ struct FileManagerScreen: View {
                     .padding(.bottom, 16)
             }
         }
+        .navigationTitle(currentFolderName)
+        .navigationBarTitleDisplayMode(.large)
+        .searchable(text: $searchText, isPresented: $searchActive, prompt: "Tìm kiếm tệp")
+        .onChange(of: searchText) { newValue in
+            Task { await startSearch(newValue) }
+        }
+        .toolbar {
+            if !pathStack.isEmpty {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button(action: { navigateTo(index: pathStack.count - 2) }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                            Text("Trở lại")
+                        }
+                    }
+                }
+            }
+            
+            ToolbarItem(placement: .topBarTrailing) {
+                if selectMode {
+                    Button("Xong") { exitSelectMode() }
+                } else {
+                    Menu {
+                        Button(action: { selectMode.toggle() }) {
+                            Label("Chọn", systemImage: "checkmark.circle")
+                        }
+                        Button(action: { showNewFolder = true }) {
+                            Label("Thư mục mới", systemImage: "folder.badge.plus")
+                        }
+                        Button(action: { showUploadPicker = true }) {
+                            Label("Tải lên", systemImage: "arrow.up.doc")
+                        }
+                        if clipboardPaths != nil {
+                            Button(action: { Task { await pasteItems() } }) {
+                                Label("Dán", systemImage: "doc.on.clipboard")
+                            }
+                        }
+                        Divider()
+                        sortMenuButton
+                        viewToggleButton
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                    }
+                }
+            }
+            
+            if selectMode {
+                ToolbarItemGroup(placement: .bottomBar) {
+                    Button(action: { copyItems(Array(selected), cut: false) }) {
+                        Image(systemName: "doc.on.doc")
+                    }
+                    Spacer()
+                    Button(action: { copyItems(Array(selected), cut: true) }) {
+                        Image(systemName: "scissors")
+                    }
+                    Spacer()
+                    Button(action: { deleteTargets = Array(selected); showDeleteConfirm = true }) {
+                        Image(systemName: "trash").foregroundColor(.red)
+                    }
+                }
+            }
+        }
         .animation(.spring(duration: 0.25), value: selectMode)
         .animation(.easeInOut(duration: 0.2), value: toastMsg == nil)
-        .toolbar(.hidden, for: .navigationBar)
         .onAppear { loadCurrent() }
         .sheet(isPresented: $showNewFolder) { newFolderSheet }
         .sheet(item: $renameEntry) { entry in renameSheet(entry) }
@@ -381,10 +423,7 @@ struct FileManagerScreen: View {
                 Spacer()
             }
         } else {
-            VStack(spacing: 0) {
-                if clipboardPaths != nil, currentPath != nil { pasteBanner }
-                if gridView { gridContent } else { listContent }
-            }
+            if gridView { gridContent } else { listContent }
         }
     }
 
@@ -420,13 +459,10 @@ struct FileManagerScreen: View {
         List {
             ForEach(entries) { entry in
                 listTile(entry)
-                    .listRowBackground(Color.clear)
-                    .listRowSeparatorTint(Color(UIColor.separator).opacity(0.5))
-                    .listRowInsets(EdgeInsets(top: 1, leading: 12, bottom: 1, trailing: 12))
             }
         }
         .listStyle(.plain)
-        .background(Color(UIColor.systemGroupedBackground))
+        .background(Color(UIColor.systemBackground))
         .scrollContentBackground(.hidden)
         .refreshable { loadCurrent() }
     }
@@ -446,36 +482,61 @@ struct FileManagerScreen: View {
                 Image(systemName: fileIcon(entry)).font(.system(size: 20)).foregroundColor(fileIconColor(entry))
             }
             VStack(alignment: .leading, spacing: 3) {
-                Text(entry.name).font(.system(size: 13, weight: .medium)).foregroundColor(.primary).lineLimit(1)
-                if !entry.isDir {
-                    let parts = [entry.formattedSize, entry.formattedDate].filter { !$0.isEmpty }
+                Text(entry.name).font(.system(size: 15, weight: .regular)).foregroundColor(.primary).lineLimit(1)
+                if !entry.isDir || entry.mtime > 0 {
+                    let parts = [entry.formattedDate, entry.isDir ? "" : entry.formattedSize].filter { !$0.isEmpty }
                     if !parts.isEmpty {
-                        Text(parts.joined(separator: " · ")).font(.system(size: 11)).foregroundColor(.secondary)
+                        Text(parts.joined(separator: " — ")).font(.system(size: 13)).foregroundColor(.secondary)
                     }
                 }
             }
             Spacer(minLength: 0)
-            if !selectMode {
-                if entry.isDir {
-                    Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold)).foregroundColor(.secondary.opacity(0.5))
-                } else {
-                    Button(action: { triggerContext(entry) }) {
-                        Image(systemName: "ellipsis").font(.system(size: 16)).foregroundColor(.secondary).frame(width: 36, height: 36)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
         }
-        .padding(.vertical, 3)
+        .padding(.vertical, 4)
         .background(isSelected ? Color.blue.opacity(0.08) : Color.clear)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
         .contentShape(Rectangle())
         .onTapGesture {
             if selectMode { toggleSelect(entry.path) }
             else if entry.isDir { navigateInto(entry) }
-            else { triggerContext(entry) }
+            else { /* native iOS Files opens a QuickLook preview here, we don't have it yet */ }
         }
-        .onLongPressGesture { if !selectMode { toggleSelect(entry.path) } }
+        .contextMenu {
+            if !selectMode {
+                Button(action: { renameText = entry.name; renameEntry = entry }) {
+                    Label("Đổi tên", systemImage: "pencil")
+                }
+                Button(action: { copyItems([entry.path], cut: false) }) {
+                    Label("Sao chép", systemImage: "doc.on.doc")
+                }
+                Button(action: { copyItems([entry.path], cut: true) }) {
+                    Label("Cắt", systemImage: "scissors")
+                }
+                Button(action: { Task { await createShareLink(entry) } }) {
+                    Label("Chia sẻ liên kết", systemImage: "link")
+                }
+                Button(action: { Task { await showQR(entry) } }) {
+                    Label("Mã QR", systemImage: "qrcode")
+                }
+                Divider()
+                Button(role: .destructive, action: { deleteTargets = [entry.path]; showDeleteConfirm = true }) {
+                    Label("Xóa", systemImage: "trash")
+                }
+            }
+        }
+        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+            if !selectMode {
+                Button(role: .destructive) {
+                    deleteTargets = [entry.path]; showDeleteConfirm = true
+                } label: { Label("Xóa", systemImage: "trash") }
+            }
+        }
+        .swipeActions(edge: .leading) {
+            if !selectMode {
+                Button {
+                    renameText = entry.name; renameEntry = entry
+                } label: { Label("Đổi tên", systemImage: "pencil") }.tint(.orange)
+            }
+        }
     }
 
     // ────────────────────────────────────────────────────────
