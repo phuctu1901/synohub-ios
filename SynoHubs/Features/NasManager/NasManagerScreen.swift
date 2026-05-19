@@ -101,12 +101,13 @@ struct NasManagerScreen: View {
                     .foregroundColor(.primary)
             }
             Spacer()
-            Button(action: { showingAddNas = true }) {
-                Image(systemName: "plus")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.blue)
-                    .frame(width: 36, height: 36)
-                    .background(Color(UIColor.tertiarySystemFill), in: Circle())
+            if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
+                Text("v\(version)")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.secondary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color(UIColor.tertiarySystemFill), in: Capsule())
             }
         }
     }
