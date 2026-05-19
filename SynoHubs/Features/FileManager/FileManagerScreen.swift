@@ -37,6 +37,14 @@ private struct FsEntry: Identifiable, Equatable, Hashable {
     }
 }
 
+// MARK: - MediaPlayPayload
+
+private struct MediaPlayPayload: Identifiable {
+    let id = UUID()
+    let url: URL
+    let title: String
+}
+
 // MARK: - Upload Document Picker (private, only used inside FileManagerScreen)
 
 private struct UploadDocumentPicker: UIViewControllerRepresentable {
@@ -100,16 +108,15 @@ struct FileManagerScreen: View {
     @State private var renameText = ""
     @State private var deleteTargets: [String] = []
     @State private var showDeleteConfirm = false
-    @State private var showUploadPicker = false
     @State private var showQRCode = false
-    @State private var qrCodeURL = ""
-    @State private var qrEntryName = ""
-
-    // Operation busy overlay
+    @State private var qrCodeURL: String = ""
+    @State private var qrEntryName: String = ""
+    @State private var showUploadPicker = false
     @State private var operationBusy = false
-
-    // Toast
     @State private var toastMsg: String? = nil
+    
+    // Media Playback
+    @State private var mediaPayload: MediaPlayPayload? = nil
 
     // Computed helpers
     private var currentPath: String? { pathStack.last }
@@ -234,6 +241,9 @@ struct FileManagerScreen: View {
                         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
                 }
             }
+        }
+        .fullScreenCover(item: $mediaPayload) { payload in
+            VideoPlayerView(url: payload.url, title: payload.title, subtitleOptions: [])
         }
     }
 
@@ -387,7 +397,7 @@ struct FileManagerScreen: View {
     private func breadcrumbChip(icon: String?, label: String, isLast: Bool, onTap: @escaping () -> Void) -> some View {
         Button(action: { if !isLast { onTap() } }) {
             HStack(spacing: 4) {
-                if let icon { Image(systemName: icon).font(.system(size: 11)).foregroundColor(isLast ? .blue : .secondary) }
+                if let icon, !icon.isEmpty { Image(systemName: icon).font(.system(size: 11)).foregroundColor(isLast ? .blue : .secondary) }
                 Text(label)
                     .font(.system(size: 12, weight: isLast ? .semibold : .regular))
                     .foregroundColor(isLast ? .blue : .secondary)
@@ -476,7 +486,8 @@ struct FileManagerScreen: View {
         Button(action: {
             if selectMode { toggleSelect(entry.path) }
             else if entry.isDir { navigateInto(entry) }
-            else { /* QuickLook placeholder */ }
+            else if isMediaFile(entry) { playMedia(entry) }
+            else { triggerContext(entry) }
         }) {
             HStack(spacing: 12) {
                 if selectMode {
@@ -568,6 +579,7 @@ struct FileManagerScreen: View {
         Button(action: {
             if selectMode { toggleSelect(entry.path) }
             else if entry.isDir { navigateInto(entry) }
+            else if isMediaFile(entry) { playMedia(entry) }
             else { triggerContext(entry) }
         }) {
             ZStack {
@@ -979,6 +991,21 @@ struct FileManagerScreen: View {
         Task {
             try? await Task.sleep(nanoseconds: 3_000_000_000)
             await MainActor.run { withAnimation { toastMsg = nil } }
+        }
+    }
+
+    private func isMediaFile(_ entry: FsEntry) -> Bool {
+        let ext = (entry.name as NSString).pathExtension.lowercased()
+        return ["mp4","mkv","avi","mov","m4v","wmv","flv","mp3","flac","wav","aac","m4a","ogg"].contains(ext)
+    }
+
+    private func playMedia(_ entry: FsEntry) {
+        Task {
+            guard let api = await SessionManager.shared.api,
+                  let url = api.getStreamUrl(entry.path) else { return }
+            await MainActor.run {
+                mediaPayload = MediaPlayPayload(url: url, title: entry.name)
+            }
         }
     }
 
