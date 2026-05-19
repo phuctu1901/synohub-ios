@@ -44,18 +44,8 @@ struct LoginView: View {
 
     // MARK: - Background
     private var animatedBackground: some View {
-        LinearGradient(
-            colors: [Color(hex: "0B1326"), Color(hex: "0D1B30"), Color(hex: "081020")],
-            startPoint: .topLeading, endPoint: .bottomTrailing
-        )
-        .ignoresSafeArea()
-        .overlay {
-            Circle()
-                .fill(Color.synoPrimaryContainer.opacity(0.06))
-                .frame(width: 300, height: 300)
-                .offset(x: 100, y: -200)
-                .blur(radius: 80)
-        }
+        Color(UIColor.systemGroupedBackground)
+            .ignoresSafeArea()
     }
 
     // MARK: - Logo

@@ -925,7 +925,7 @@ struct FileManagerScreen: View {
         case "jpg","jpeg","png","heic","gif","webp","bmp": return .green
         case "mp4","mkv","avi","mov","m4v","wmv","flv":    return .blue
         case "mp3","flac","wav","aac","m4a","ogg":         return .orange
-        case "pdf":                                        return Color(hex: "FF6B6B")
+        case "pdf":                                        return .red
         case "zip","rar","7z","tar","gz":                  return .orange
         case "doc","docx","xls","xlsx","csv","ppt","pptx": return .blue
         default:                                           return .secondary

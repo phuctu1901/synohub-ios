@@ -25,24 +25,9 @@ struct GlassCard<Content: View>: View {
     var body: some View {
         content
             .padding(contentPadding)
-            .background {
-                ZStack {
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .fill(Color.synoSurfaceContainer.opacity(0.55))
-                        .background(
-                            .ultraThinMaterial,
-                            in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        )
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .strokeBorder(
-                            borderColor.opacity(hasGlow ? 0.35 : 0.15),
-                            lineWidth: hasGlow ? 1.2 : 0.8
-                        )
-                }
-            }
-            .shadow(
-                color:  borderColor.opacity(hasGlow ? 0.25 : 0.06),
-                radius: hasGlow ? 32 : 12
+            .background(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(Color(UIColor.secondarySystemGroupedBackground))
             )
     }
 }
@@ -50,35 +35,17 @@ struct GlassCard<Content: View>: View {
 // MARK: - Legacy glassBackground modifier (backward compat)
 extension View {
     func glassBackground(cornerRadius: CGFloat = 20, opacity: Double = 0.5, shadowRadius: CGFloat = 10) -> some View {
-        self.background {
-            ZStack {
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(Color.synoSurfaceContainer.opacity(opacity))
-                    .background(
-                        .ultraThinMaterial,
-                        in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    )
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .strokeBorder(Color.synoPrimary.opacity(0.15), lineWidth: 0.8)
-            }
-        }
-        .shadow(color: .black.opacity(0.3), radius: shadowRadius)
+        self.background(
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(Color(UIColor.secondarySystemGroupedBackground))
+        )
     }
 
     /// Lightweight glass card modifier – used by all screens
     func glassCard(cornerRadius: CGFloat = 20, borderColor: Color? = nil) -> some View {
-        self.background {
-            ZStack {
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(Color.synoSurfaceContainer.opacity(0.55))
-                    .background(
-                        .ultraThinMaterial,
-                        in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    )
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .strokeBorder((borderColor ?? Color.synoPrimary).opacity(0.15), lineWidth: 0.8)
-            }
-        }
-        .shadow(color: .black.opacity(0.15), radius: 8)
+        self.background(
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(Color(UIColor.secondarySystemGroupedBackground))
+        )
     }
 }

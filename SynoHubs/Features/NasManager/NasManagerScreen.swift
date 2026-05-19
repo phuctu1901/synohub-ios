@@ -40,12 +40,12 @@ struct NasManagerScreen: View {
                                 Text("Thêm NAS")
                                     .font(.system(size: 14, weight: .bold))
                             }
-                            .foregroundColor(Color(hex: "003543"))
+                            .foregroundColor(.white)
                             .padding(.horizontal, 20)
                             .padding(.vertical, 13)
-                            .background(Color.synoPrimaryContainer)
+                            .background(Color.blue)
                             .clipShape(Capsule())
-                            .shadow(color: Color.synoPrimaryContainer.opacity(0.4), radius: 12)
+                            .shadow(color: Color.blue.opacity(0.4), radius: 12)
                         }
                         .padding(.trailing, 20)
                         .padding(.bottom, 32)
