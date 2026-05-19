@@ -1,5 +1,11 @@
 # SynoHub iOS
 
+<p align="center">
+  <img src="docs/images/1_dashboard.png" width="260" alt="Dashboard Screen"/>
+  <img src="docs/images/2_media.png" width="260" alt="Media Center Screen"/>
+  <img src="docs/images/3_filemanager.png" width="260" alt="File Manager Screen"/>
+</p>
+
 SynoHub is a high-performance, native iOS client built exclusively with SwiftUI to manage your Synology NAS. 
 Designed with strict adherence to Apple's Human Interface Guidelines (HIG), it brings a premium, responsive, and seamless experience right to your iPhone and iPad.
 
