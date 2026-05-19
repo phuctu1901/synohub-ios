@@ -482,11 +482,11 @@ struct FileManagerScreen: View {
                 Image(systemName: fileIcon(entry)).font(.system(size: 20)).foregroundColor(fileIconColor(entry))
             }
             VStack(alignment: .leading, spacing: 3) {
-                Text(entry.name).font(.system(size: 15, weight: .regular)).foregroundColor(.primary).lineLimit(1)
+                Text(entry.name).font(.body).foregroundColor(.primary).lineLimit(1)
                 if !entry.isDir || entry.mtime > 0 {
                     let parts = [entry.formattedDate, entry.isDir ? "" : entry.formattedSize].filter { !$0.isEmpty }
                     if !parts.isEmpty {
-                        Text(parts.joined(separator: " — ")).font(.system(size: 13)).foregroundColor(.secondary)
+                        Text(parts.joined(separator: " — ")).font(.subheadline).foregroundColor(.secondary)
                     }
                 }
             }
