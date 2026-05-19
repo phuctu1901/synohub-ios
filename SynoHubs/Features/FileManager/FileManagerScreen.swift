@@ -470,36 +470,41 @@ struct FileManagerScreen: View {
     @ViewBuilder
     private func listTile(_ entry: FsEntry) -> some View {
         let isSelected = selected.contains(entry.path)
-        HStack(spacing: 12) {
-            if selectMode {
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 22))
-                    .foregroundColor(isSelected ? .blue : Color(UIColor.tertiaryLabel))
-                    .animation(.easeInOut(duration: 0.15), value: isSelected)
-            }
-            ZStack {
-                RoundedRectangle(cornerRadius: 10).fill(fileIconColor(entry).opacity(0.12)).frame(width: 40, height: 40)
-                Image(systemName: fileIcon(entry)).font(.system(size: 20)).foregroundColor(fileIconColor(entry))
-            }
-            VStack(alignment: .leading, spacing: 3) {
-                Text(entry.name).font(.body).foregroundColor(.primary).lineLimit(1)
-                if !entry.isDir || entry.mtime > 0 {
-                    let parts = [entry.formattedDate, entry.isDir ? "" : entry.formattedSize].filter { !$0.isEmpty }
-                    if !parts.isEmpty {
-                        Text(parts.joined(separator: " — ")).font(.subheadline).foregroundColor(.secondary)
-                    }
-                }
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(.vertical, 4)
-        .background(isSelected ? Color.blue.opacity(0.08) : Color.clear)
-        .contentShape(Rectangle())
-        .onTapGesture {
+        let iconName = fileIcon(entry)
+        let iconColor = fileIconColor(entry)
+        
+        Button(action: {
             if selectMode { toggleSelect(entry.path) }
             else if entry.isDir { navigateInto(entry) }
-            else { /* native iOS Files opens a QuickLook preview here, we don't have it yet */ }
+            else { /* QuickLook placeholder */ }
+        }) {
+            HStack(spacing: 12) {
+                if selectMode {
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 22))
+                        .foregroundColor(isSelected ? .blue : Color(UIColor.tertiaryLabel))
+                        .animation(.easeInOut(duration: 0.15), value: isSelected)
+                }
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10).fill(iconColor.opacity(0.12)).frame(width: 40, height: 40)
+                    Image(systemName: iconName).font(.system(size: 20)).foregroundColor(iconColor)
+                }
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(entry.name).font(.body).foregroundColor(.primary).lineLimit(1)
+                    if !entry.isDir || entry.mtime > 0 {
+                        let parts = [entry.formattedDate, entry.isDir ? "" : entry.formattedSize].filter { !$0.isEmpty }
+                        if !parts.isEmpty {
+                            Text(parts.joined(separator: " — ")).font(.subheadline).foregroundColor(.secondary)
+                        }
+                    }
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+        .listRowBackground(isSelected ? Color.blue.opacity(0.08) : Color(UIColor.systemBackground))
         .contextMenu {
             if !selectMode {
                 Button(action: { renameText = entry.name; renameEntry = entry }) {
@@ -557,34 +562,39 @@ struct FileManagerScreen: View {
     @ViewBuilder
     private func gridTile(_ entry: FsEntry) -> some View {
         let isSelected = selected.contains(entry.path)
-        ZStack {
-            RoundedRectangle(cornerRadius: 14)
-                .fill(isSelected ? Color.blue.opacity(0.15) : Color(UIColor.secondarySystemGroupedBackground).opacity(0.6))
-                .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(
-                    isSelected ? Color.blue.opacity(0.4) : Color.white.opacity(0.06), lineWidth: 1))
-            VStack(spacing: 6) {
-                if selectMode {
-                    HStack {
-                        Spacer()
-                        Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                            .font(.system(size: 18)).foregroundColor(isSelected ? .blue : Color(UIColor.tertiaryLabel)).padding(4)
-                    }
-                }
-                Image(systemName: fileIcon(entry)).font(.system(size: 36)).foregroundColor(fileIconColor(entry)).padding(.top, selectMode ? 0 : 10)
-                Text(entry.name).font(.system(size: 11, weight: .medium)).foregroundColor(.primary)
-                    .lineLimit(2).multilineTextAlignment(.center).padding(.horizontal, 6)
-                if !entry.isDir && entry.size > 0 {
-                    Text(entry.formattedSize).font(.system(size: 9)).foregroundColor(.secondary).padding(.bottom, 6)
-                }
-            }
-            .padding(.vertical, selectMode ? 4 : 0)
-        }
-        .aspectRatio(0.85, contentMode: .fit)
-        .onTapGesture {
+        let iconName = fileIcon(entry)
+        let iconColor = fileIconColor(entry)
+        
+        Button(action: {
             if selectMode { toggleSelect(entry.path) }
             else if entry.isDir { navigateInto(entry) }
             else { triggerContext(entry) }
+        }) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(isSelected ? Color.blue.opacity(0.15) : Color(UIColor.secondarySystemGroupedBackground).opacity(0.6))
+                    .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(
+                        isSelected ? Color.blue.opacity(0.4) : Color.white.opacity(0.06), lineWidth: 1))
+                VStack(spacing: 6) {
+                    if selectMode {
+                        HStack {
+                            Spacer()
+                            Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                                .font(.system(size: 18)).foregroundColor(isSelected ? .blue : Color(UIColor.tertiaryLabel)).padding(4)
+                        }
+                    }
+                    Image(systemName: iconName).font(.system(size: 36)).foregroundColor(iconColor).padding(.top, selectMode ? 0 : 10)
+                    Text(entry.name).font(.system(size: 11, weight: .medium)).foregroundColor(.primary)
+                        .lineLimit(2).multilineTextAlignment(.center).padding(.horizontal, 6)
+                    if !entry.isDir && entry.size > 0 {
+                        Text(entry.formattedSize).font(.system(size: 9)).foregroundColor(.secondary).padding(.bottom, 6)
+                    }
+                }
+                .padding(.vertical, selectMode ? 4 : 0)
+            }
+            .aspectRatio(0.85, contentMode: .fit)
         }
+        .buttonStyle(.plain)
         .onLongPressGesture {
             if !selectMode { toggleSelect(entry.path) } else { triggerContext(entry) }
         }
