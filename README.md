@@ -37,6 +37,15 @@ SynoHub là một ứng dụng native iOS hiệu năng cao được xây dựng 
 
 ---
 
+## 🗺 Lộ trình Phát triển (Roadmap)
+
+Dự án đang liên tục được mở rộng với tầm nhìn trở thành hệ sinh thái toàn diện thay thế hoàn toàn các ứng dụng gốc của Synology:
+- [**Trung tâm Đa phương tiện (Jellyfin/Plex-Inspired):**](docs/TODO_MediaCenter.md) Xây dựng thư viện phim thông minh với siêu dữ liệu từ TMDB, quản lý tiến trình xem và nâng cấp tính năng Player.
+- [**Tích hợp File Provider Extension:**](docs/TODO_FileProvider.md) Gắn kết trực tiếp dữ liệu NAS vào ứng dụng **Files (Tệp)** gốc của hệ điều hành iOS/iPadOS, cho phép đồng bộ và chỉnh sửa tài liệu xuyên ứng dụng.
+- [**Photos AI (Apple Intelligence & Core ML):**](docs/TODO_PhotosIntelligence.md) Tận dụng sức mạnh xử lý NPU trên thiết bị để nhận diện khuôn mặt, vật thể, tự động tạo Smart Albums, Memories và tìm kiếm ảnh bằng **Ngôn ngữ tự nhiên** hoàn toàn offline (Privacy-First).
+
+---
+
 ## 🛠 Công nghệ sử dụng
 - **Kiến trúc:** MVVM + Clean Architecture 
 - **Giao diện (UI):** SwiftUI (Hỗ trợ iOS 16.0+)
