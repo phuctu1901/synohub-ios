@@ -23,7 +23,7 @@ struct NasManagerScreen: View {
                         // Header Section
                         headerView
                             .padding(.horizontal, 20)
-                            .padding(.top, 20)
+                            .padding(.top, 4)
 
                         if profiles.isEmpty {
                             emptyState
@@ -66,7 +66,9 @@ struct NasManagerScreen: View {
                         .scaleEffect(1.5)
                 }
             }
-            .navigationBarHidden(true)
+            .toolbar(.hidden, for: .navigationBar)
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $showingAddNas) { AddNasView() }
             .fullScreenCover(isPresented: $navigateToShell) {
                 MainShell(onDisconnect: { navigateToShell = false })
