@@ -1,80 +1,98 @@
-//
-//  ContentView.swift
-//  SynoHubs
-//
-//  Created by Nguyen Tu on 19/5/26.
-//
-
 import SwiftUI
-import SwiftData
+
+// MARK: - App Tab
+
+enum AppTab: Int, CaseIterable {
+    case dashboard, files, media, settings
+
+    var icon: String {
+        switch self {
+        case .dashboard: "square.grid.2x2"
+        case .files:     "folder"
+        case .media:     "play.rectangle"
+        case .settings:  "gear"
+        }
+    }
+    var label: String {
+        switch self {
+        case .dashboard: "Tổng quan"
+        case .files:     "Tệp"
+        case .media:     "Media"
+        case .settings:  "Cài đặt"
+        }
+    }
+}
+
+// MARK: - App State
+
+enum AppState {
+    case splash, login, main
+}
+
+// MARK: - Root View
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+    @State private var appState: AppState = .splash
 
     var body: some View {
-        NavigationViewWrapper {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+        ZStack {
+            switch appState {
+            case .splash:
+                SplashView {
+                    withAnimation(.easeInOut(duration: 0.4)) {
+                        appState = .login
                     }
                 }
-                .onDelete(perform: deleteItems)
-            }
-#if os(macOS)
-            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-#endif
-            .toolbar {
-#if os(iOS)
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-#endif
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
+            case .login:
+                LoginView {
+                    withAnimation(.easeInOut(duration: 0.4)) {
+                        appState = .main
                     }
                 }
-            }
-        }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
+            case .main:
+                MainShell(onDisconnect: {
+                    withAnimation(.easeInOut(duration: 0.4)) {
+                        appState = .login
+                    }
+                })
             }
         }
     }
 }
 
-fileprivate struct NavigationViewWrapper<Content: View>: View {
-    let content: () -> Content
+// MARK: - Main Shell (Native iOS TabView)
+
+struct MainShell: View {
+    var onDisconnect: (() -> Void)?
+
+    @State private var selectedTab: AppTab = .dashboard
 
     var body: some View {
-#if os(macOS)
-        NavigationSplitView {
-            content()
-        } detail: {
-            Text("Select an item")
-        }
-#else
-        content()
-#endif
-    }
-}
+        TabView(selection: $selectedTab) {
+            NavigationStack {
+                DashboardScreen(onDisconnect: onDisconnect)
+            }
+            .tabItem { Label(AppTab.dashboard.label, systemImage: AppTab.dashboard.icon) }
+            .tag(AppTab.dashboard)
 
-#Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+            NavigationStack {
+                FileManagerScreen()
+            }
+            .tabItem { Label(AppTab.files.label, systemImage: AppTab.files.icon) }
+            .tag(AppTab.files)
+
+            NavigationStack {
+                MediaHubScreen()
+            }
+            .tabItem { Label(AppTab.media.label, systemImage: AppTab.media.icon) }
+            .tag(AppTab.media)
+
+            NavigationStack {
+                SettingsScreen(onDisconnect: onDisconnect)
+            }
+            .tabItem { Label(AppTab.settings.label, systemImage: AppTab.settings.icon) }
+            .tag(AppTab.settings)
+        }
+        .tint(.blue)
+    }
 }
