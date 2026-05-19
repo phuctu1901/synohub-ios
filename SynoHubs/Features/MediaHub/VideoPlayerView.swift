@@ -317,6 +317,24 @@ private func setScreenBrightness(_ value: CGFloat) {
     activeScreen()?.brightness = value
 }
 
+private func getRealSafeAreaTop() -> CGFloat {
+    guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+          let window = windowScene.windows.first else {
+        return 59
+    }
+    
+    let bottomInset = window.safeAreaInsets.bottom
+    let isPortrait = window.bounds.height > window.bounds.width
+    
+    if bottomInset > 0 && isPortrait {
+        // It's a notched/Dynamic Island device in portrait.
+        // Even if status bar is hidden (causing top inset to be 0), we must avoid the hardware cutout.
+        return max(window.safeAreaInsets.top, 59) 
+    }
+    
+    return max(window.safeAreaInsets.top, 24)
+}
+
 // MARK: - AirPlay Button
 
 struct AirPlayButton: UIViewRepresentable {
@@ -916,7 +934,7 @@ struct VideoPlayerView: View {
                     VideoControlsOverlay(
                         controller:    controller,
                         title:         title,
-                        safeAreaTop:   max(geo.safeAreaInsets.top, 24),
+                        safeAreaTop:   getRealSafeAreaTop(),
                         hasSubtitles:  !subtitleOptions.isEmpty || subtitleManager.selectedID != nil,
                         onClose:       { dismiss() },
                         onSubtitleTap: { showSubtitlePicker = true },
