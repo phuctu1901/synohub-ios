@@ -24,6 +24,21 @@ struct MediaHubScreen: View {
     private var videoExts: [String] { ["mp4","mov","mkv","avi","wmv","flv","ts","m4v","webm"] }
     private var audioExts: [String] { ["mp3","flac","aac","m4a","wav","ogg","wma","opus"] }
 
+    // MARK: - Smart Folder Logic
+    struct SmartFolderItem: Identifiable {
+        let id = UUID()
+        let name: String
+        let icon: String
+        let color: Color
+        let targetPath: String
+    }
+    
+    private let staticSmartFolders: [SmartFolderItem] = [
+        SmartFolderItem(name: "Phim Điện Ảnh", icon: "film", color: .blue, targetPath: "/video/Movies"),
+        SmartFolderItem(name: "TV Shows", icon: "tv", color: .purple, targetPath: "/video/TV Shows"),
+        SmartFolderItem(name: "Âm Nhạc", icon: "music.note", color: .pink, targetPath: "/music"),
+        SmartFolderItem(name: "Video Gia Đình", icon: "folder.fill.badge.person.crop", color: .teal, targetPath: "/video/Home Videos")
+    ]
     var body: some View {
         ZStack {
             Color(UIColor.systemGroupedBackground).ignoresSafeArea()
@@ -119,6 +134,12 @@ struct MediaHubScreen: View {
                         .font(.title2).fontWeight(.bold)
                         .foregroundColor(.white)
                         .lineLimit(2)
+                        
+                    Text("Một nhóm nhà thám hiểm sử dụng một lỗ sâu mới được khám phá để vượt qua giới hạn của du hành vũ trụ.")
+                        .font(.system(size: 13))
+                        .foregroundColor(Color(UIColor.systemGray2))
+                        .lineLimit(2)
+                        .padding(.bottom, 6)
 
                     HStack(spacing: 12) {
                         Button { Task { playVideo(file: hero) } } label: {
@@ -175,7 +196,7 @@ struct MediaHubScreen: View {
                                 VStack(alignment: .leading, spacing: 6) {
                                     ZStack {
                                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                            .fill(LinearGradient(colors: [.teal.opacity(0.6), .blue.opacity(0.6)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                            .fill(LinearGradient(colors: vid.name.count % 2 == 0 ? [.green.opacity(0.7), .teal.opacity(0.8)] : [.blue.opacity(0.7), .cyan.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing))
                                             .frame(width: 220, height: 120)
                                         
                                         Image(systemName: "play.circle")
@@ -219,15 +240,14 @@ struct MediaHubScreen: View {
                 .padding(.horizontal, 16)
 
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                // Render physical folders as smart folders
-                ForEach(folders.prefix(4)) { folder in
-                    NavigationLink(destination: MediaHubScreen(currentPath: folder.path, folderName: folder.name)) {
+                ForEach(staticSmartFolders) { folder in
+                    NavigationLink(destination: MediaHubScreen(currentPath: folder.targetPath, folderName: folder.name)) {
                         HStack(spacing: 12) {
-                            Image(systemName: iconForFolder(folder.name))
+                            Image(systemName: folder.icon)
                                 .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(colorForFolder(folder.name))
+                                .foregroundColor(folder.color)
                                 .frame(width: 40, height: 40)
-                                .background(colorForFolder(folder.name).opacity(0.15), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                                .background(folder.color.opacity(0.15), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                             
                             Text(folder.name)
                                 .font(.subheadline).fontWeight(.semibold)
@@ -242,22 +262,6 @@ struct MediaHubScreen: View {
                 }
             }
             .padding(.horizontal, 16)
-            
-            // If more than 4 folders, show a "Tất cả thư mục" button
-            if folders.count > 4 {
-                NavigationLink(destination: MediaHubScreen(currentPath: currentPath ?? "/", folderName: "Tất cả thư mục")) {
-                    HStack {
-                        Text("Xem tất cả thư mục")
-                            .font(.subheadline).fontWeight(.medium)
-                        Spacer()
-                        Image(systemName: "chevron.right").font(.caption)
-                    }
-                    .foregroundColor(.blue)
-                    .padding()
-                    .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .padding(.horizontal, 16)
-                }
-            }
         }
     }
 
@@ -278,7 +282,7 @@ struct MediaHubScreen: View {
                             Button { Task { playVideo(file: vid) } } label: {
                                 VStack(alignment: .leading, spacing: 6) {
                                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                        .fill(LinearGradient(colors: [.indigo.opacity(0.4), .purple.opacity(0.5)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                        .fill(LinearGradient(colors: vid.name.count % 2 == 0 ? [.orange.opacity(0.8), .red.opacity(0.8)] : [.indigo.opacity(0.8), .blue.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing))
                                         .frame(width: 120, height: 180)
                                         .overlay(Image(systemName: "film").font(.largeTitle).foregroundColor(.white.opacity(0.5)))
                                     
