@@ -90,7 +90,7 @@ struct MediaHubScreen: View {
                 
                 // Dark gradient overlay for text readability
                 LinearGradient(
-                    colors: [.black.opacity(0.8), .transparent],
+                    colors: [.black.opacity(0.8), .clear],
                     startPoint: .bottom, endPoint: .center
                 )
 
