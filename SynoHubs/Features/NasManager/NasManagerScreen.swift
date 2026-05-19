@@ -11,24 +11,31 @@ struct NasManagerScreen: View {
     @State private var navigateToShell = false
     @State private var onlineStatus: [UUID: Bool] = [:]
     @State private var isConnecting    = false
-
-    private let gridCols = [
-        GridItem(.flexible(), spacing: 12),
-        GridItem(.flexible(), spacing: 12)
-    ]
+    @State private var pulseOpacity    = 0.3
 
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.synoBackground.ignoresSafeArea()
+                Color(UIColor.systemGroupedBackground).ignoresSafeArea()
 
-                if profiles.isEmpty {
-                    emptyState
-                } else {
-                    nasGrid
+                ScrollView {
+                    VStack(spacing: 0) {
+                        // Header Section
+                        headerView
+                            .padding(.horizontal, 20)
+                            .padding(.top, 20)
+
+                        if profiles.isEmpty {
+                            emptyState
+                                .padding(.top, 60)
+                        } else {
+                            nasList
+                        }
+                    }
+                    .padding(.bottom, 120)
                 }
 
-                // FAB
+                // Floating Action Button (FAB)
                 VStack {
                     Spacer()
                     HStack {
@@ -36,135 +43,141 @@ struct NasManagerScreen: View {
                         Button(action: { showingAddNas = true }) {
                             HStack(spacing: 8) {
                                 Image(systemName: "plus")
-                                    .font(.system(size: 15, weight: .bold))
+                                    .font(.system(size: 16, weight: .bold))
                                 Text("Thêm NAS")
-                                    .font(.system(size: 14, weight: .bold))
+                                    .font(.system(size: 15, weight: .semibold))
                             }
                             .foregroundColor(.white)
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 13)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 16)
                             .background(Color.blue)
                             .clipShape(Capsule())
-                            .shadow(color: Color.blue.opacity(0.4), radius: 12)
+                            .shadow(color: Color.blue.opacity(0.35), radius: 24, y: 8)
                         }
                         .padding(.trailing, 20)
-                        .padding(.bottom, 32)
+                        .padding(.bottom, 40)
                     }
                 }
 
                 if isConnecting {
                     Color.black.opacity(0.4).ignoresSafeArea()
                     ProgressView()
-                        .tint(.synoPrimary)
+                        .tint(.blue)
                         .scaleEffect(1.5)
                 }
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar { toolbarContent }
-            .toolbarBackground(Color.synoSurfaceContainer, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .navigationBarHidden(true)
             .sheet(isPresented: $showingAddNas) { AddNasView() }
             .fullScreenCover(isPresented: $navigateToShell) {
                 MainShell(onDisconnect: { navigateToShell = false })
             }
         }
-        .onAppear { Task { await pingAll() } }
+        .onAppear {
+            Task { await pingAll() }
+            withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+                pulseOpacity = 1.0
+            }
+        }
     }
 
-    // MARK: Toolbar
-
-    @ToolbarContentBuilder
-    private var toolbarContent: some ToolbarContent {
-        ToolbarItem(placement: .principal) {
-            HStack(spacing: 10) {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(Color.synoSurfaceContainerHigh)
-                    .frame(width: 32, height: 32)
-                    .overlay {
+    // MARK: - Header
+    private var headerView: some View {
+        HStack {
+            HStack(spacing: 12) {
+                LinearGradient(colors: [.blue, Color(red: 0.1, green: 0.1, blue: 0.8)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    .frame(width: 36, height: 36)
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .shadow(color: .blue.opacity(0.3), radius: 8, y: 4)
+                    .overlay(
                         Image(systemName: "server.rack")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.synoPrimaryContainer)
-                    }
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white)
+                    )
+                
                 Text("SynoHub")
-                    .font(.system(size: 20, weight: .heavy))
-                    .foregroundColor(.synoCyan400)
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
             }
-        }
-        ToolbarItem(placement: .navigationBarTrailing) {
+            Spacer()
             Button(action: { showingAddNas = true }) {
-                Image(systemName: "plus.circle.fill")
-                    .font(.title2)
-                    .foregroundColor(.synoCyan400)
+                Image(systemName: "plus")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.blue)
+                    .frame(width: 36, height: 36)
+                    .background(Color(UIColor.tertiarySystemFill), in: Circle())
             }
         }
     }
 
-    // MARK: Empty State
-
+    // MARK: - Empty State
     private var emptyState: some View {
         VStack(spacing: 20) {
             ZStack {
                 Circle()
-                    .fill(Color.synoPrimaryContainer.opacity(0.08))
-                    .frame(width: 80, height: 80)
+                    .fill(Color.blue.opacity(0.08))
+                    .frame(width: 100, height: 100)
                 Image(systemName: "server.rack")
-                    .font(.system(size: 36))
-                    .foregroundColor(.synoPrimaryContainer.opacity(0.4))
+                    .font(.system(size: 40))
+                    .foregroundColor(.blue.opacity(0.4))
             }
             Text("Chưa có NAS nào")
-                .font(.system(size: 18, weight: .bold))
-                .foregroundColor(.synoOnSurface)
+                .font(.system(size: 20, weight: .bold))
+                .foregroundColor(.primary)
             Text("Nhấn + để thêm thiết bị Synology NAS của bạn")
-                .font(.system(size: 13))
-                .foregroundColor(.synoOnSurfaceVariant)
+                .font(.system(size: 14))
+                .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 48)
         }
     }
 
-    // MARK: NAS Grid
-
-    private var nasGrid: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                // Header
-                HStack {
-                    Text("Thiết bị của tôi")
-                        .font(.system(size: 16, weight: .heavy))
-                        .foregroundColor(.synoOnSurface)
-                    Spacer()
+    // MARK: - NAS List
+    private var nasList: some View {
+        VStack(spacing: 16) {
+            // Section Title & Badge
+            HStack(alignment: .bottom) {
+                Text("Thiết bị của tôi")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.primary)
+                Spacer()
+                
+                let onlineCount = profiles.filter { onlineStatus[$0.id] == true }.count
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(onlineCount > 0 ? Color.green : Color.orange)
+                        .frame(width: 6, height: 6)
+                        .opacity(onlineCount > 0 ? pulseOpacity : 1.0)
                     Text("\(profiles.count) thiết bị")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundColor(.synoSecondary)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(Color.synoSecondary.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.secondary)
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 12)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(Color(UIColor.tertiarySystemFill), in: Capsule())
+                .overlay(Capsule().stroke(Color(UIColor.separator).opacity(0.3), lineWidth: 1))
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 24)
 
-                LazyVGrid(columns: gridCols, spacing: 12) {
-                    ForEach(profiles) { profile in
-                        NasCardView(
-                            profile:  profile,
-                            isOnline: onlineStatus[profile.id] ?? false
-                        ) {
-                            Task { await connect(profile) }
-                        } onDelete: {
-                            modelContext.delete(profile)
-                        }
-                        .aspectRatio(0.82, contentMode: .fit)
+            // Device Cards
+            LazyVStack(spacing: 16) {
+                ForEach(profiles) { profile in
+                    NasCardView(
+                        profile:  profile,
+                        isOnline: onlineStatus[profile.id] ?? false,
+                        pulseOpacity: pulseOpacity
+                    ) {
+                        Task { await connect(profile) }
+                    } onDelete: {
+                        modelContext.delete(profile)
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 120)
             }
-            .padding(.top, 12)
+            .padding(.horizontal, 20)
         }
     }
 
-    // MARK: Actions
-
+    // MARK: - Actions
     private func pingAll() async {
         await withTaskGroup(of: (UUID, Bool).self) { group in
             for profile in profiles {
@@ -202,62 +215,83 @@ struct NasManagerScreen: View {
 }
 
 // MARK: - NAS Card View
-
 private struct NasCardView: View {
     let profile:  NasProfile
     let isOnline: Bool
+    let pulseOpacity: Double
     let onTap:    () -> Void
     let onDelete: () -> Void
 
     var body: some View {
         Button(action: onTap) {
-            GlassCard(
-                cornerRadius: 20,
-                hasGlow:      isOnline,
-                borderColor:  isOnline ? .synoSecondary : .synoOutlineVariant,
-                padding:      14
-            ) {
-                VStack(spacing: 0) {
-                    // NAS illustration
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(Color.synoSurfaceContainerLowest.opacity(0.3))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 72)
-                        .overlay {
-                            Image(systemName: "server.rack")
-                                .font(.system(size: 32))
-                                .foregroundColor(.synoPrimaryContainer)
+            ZStack(alignment: .topTrailing) {
+                // Background subtle icon
+                Image(systemName: "server.rack")
+                    .font(.system(size: 140))
+                    .foregroundColor(Color(UIColor.label).opacity(0.03))
+                    .offset(x: 20, y: -20)
+                
+                VStack(spacing: 24) {
+                    // Top row: Icon + Status Pill
+                    HStack(alignment: .top) {
+                        Image(systemName: "server.rack")
+                            .font(.system(size: 24, weight: .medium))
+                            .foregroundColor(.blue)
+                            .padding(12)
+                            .background(Color(UIColor.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+                        Spacer()
+
+                        // Status Pill
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(isOnline ? Color.green : Color.red)
+                                .frame(width: 6, height: 6)
+                                .opacity(isOnline ? pulseOpacity : 1.0)
+                            Text(isOnline ? "TRỰC TUYẾN" : "NGOẠI TUYẾN")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(isOnline ? .green : .red)
+                                .tracking(0.5)
                         }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(
+                            (isOnline ? Color.green : Color.red).opacity(0.1),
+                            in: Capsule()
+                        )
+                        .overlay(Capsule().stroke((isOnline ? Color.green : Color.red).opacity(0.2), lineWidth: 1))
+                    }
 
-                    Spacer(minLength: 10)
+                    // Bottom row: Info + Chevron
+                    HStack(alignment: .bottom) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(profile.nickname.isEmpty ? profile.host : profile.nickname)
+                                .font(.system(size: 22, weight: .bold))
+                                .foregroundColor(.primary)
+                                .lineLimit(1)
 
-                    // Nickname
-                    Text(profile.nickname.isEmpty ? profile.host : profile.nickname)
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(.synoOnSurface)
-                        .lineLimit(1)
-                        .frame(maxWidth: .infinity, alignment: .center)
-
-                    // Address
-                    Text(profile.isQuickConnect ? profile.host : "\(profile.host):\(profile.port)")
-                        .font(.system(size: 10))
-                        .foregroundColor(.synoOnSurfaceVariant)
-                        .lineLimit(1)
-                        .padding(.top, 2)
-
-                    Spacer(minLength: 6)
-
-                    // Online/offline dot
-                    HStack(spacing: 5) {
-                        Circle()
-                            .fill(isOnline ? Color.synoSecondary : Color.synoError)
-                            .frame(width: 6, height: 6)
-                        Text(isOnline ? "Trực tuyến" : "Ngoại tuyến")
-                            .font(.system(size: 9, weight: .semibold))
-                            .foregroundColor(isOnline ? .synoSecondary : .synoError)
+                            Text(profile.isQuickConnect ? profile.host : "\(profile.host):\(profile.port)")
+                                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.secondary.opacity(0.5))
+                            .frame(width: 32, height: 32)
+                            .background(Color(UIColor.tertiarySystemFill), in: Circle())
                     }
                 }
+                .padding(20)
             }
+            .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .stroke(Color(UIColor.separator).opacity(0.3), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.05), radius: 10, y: 4)
         }
         .buttonStyle(.plain)
         .contextMenu {
@@ -273,4 +307,3 @@ private struct NasCardView: View {
     NasManagerScreen()
         .modelContainer(for: NasProfile.self, inMemory: true)
 }
-
